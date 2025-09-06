@@ -1,0 +1,194 @@
+# orders/models.py
+import uuid
+import random
+import string
+from django.db import models
+from django.db.models import Q
+from django.contrib.auth import get_user_model
+from products.models import Product
+from accounts.models import User, Address, Supplier, Delivery
+
+class OrderManager(models.Manager):
+    def for_delivery_person(self, user):
+        try:
+            return self.filter(
+                Q(shipments__from_state=user.delivery_profile.governorate) &
+                (Q(shipments__delivery_person=user) | Q(shipments__delivery_person__isnull=True)) &
+                ~Q(shipments__status__in=[
+                    Shipment.ShipmentStatus.DELIVERED_SUCCESSFULLY,
+                    Shipment.ShipmentStatus.ON_MY_WAY,
+                    Shipment.ShipmentStatus.DELIVERED_TO_First_WAREHOUSE,
+                    Shipment.ShipmentStatus.CANCELLED,
+                    Shipment.ShipmentStatus.In_Transmit
+                ])
+            )
+        except Delivery.DoesNotExist:
+            return self.none()
+
+    def for_customer(self, user):
+        return self.filter(user=user).exclude(total_amount=0)
+
+    def for_supplier(self, user):
+        return self.filter(shipments__supplier__user=user)
+
+    def for_delivery(self, user):
+        return self.filter(shipments__delivery_person__user=user)
+
+class Wishlist(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='wishlist')
+    products = models.ManyToManyField(Product, through='WishlistItem')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Wishlist for: {self.user.get_full_name}"
+
+class WishlistItem(models.Model):
+    wishlist = models.ForeignKey(Wishlist, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Wishlist Item: {self.product.name}"
+
+class Cart(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    products = models.ManyToManyField(Product, through='CartItem')
+
+    def __str__(self):
+        return f"Cart ID:{self.id} for {self.user.get_full_name}"
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    color = models.CharField(max_length=20, blank=True, null=True)
+    size = models.CharField(max_length=20, blank=True, null=True)
+
+    def __str__(self):
+        return f"Cart Item: {self.product.name}"
+
+class Order(models.Model):
+    class OrderStatus(models.TextChoices):
+        CREATED = 'created'
+        READY_TO_SHIP = 'ready_to_ship'
+        ON_MY_WAY = 'on my way'
+        DELIVERED_TO_FIRST_WAREHOUSE = 'delivered to First warehouse'
+        IN_TRANSMIT = 'In Transmit'
+        DELIVERED_TO_SECOND_WAREHOUSE = 'delivered to Second warehouse'
+        DELIVERED_SUCCESSFULLY = 'delivered successfully'
+        FAILED_DELIVERY = 'failed delivery'
+        CANCELLED = 'cancelled'
+
+    class PaymentMethod(models.TextChoices):
+        CASH_ON_DELIVERY = 'Cash on Delivery'
+        CREDIT_CARD = 'Credit Card'
+        BALANCE = 'Balance'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    address = models.ForeignKey(Address, on_delete=models.CASCADE)
+    payment_method = models.CharField(max_length=50, choices=PaymentMethod.choices, default=PaymentMethod.CASH_ON_DELIVERY)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    delivery_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    final_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    status = models.CharField(max_length=50, choices=OrderStatus.choices, default=OrderStatus.CREATED)
+    paid = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    products = models.ManyToManyField(Product, through='OrderItem')
+
+    objects = OrderManager()
+
+    def __str__(self):
+        return f"Order ID: {self.id} for {self.user.email}"
+
+    class Meta:
+        ordering = ["-created_at"]
+
+class OrderItem(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    color = models.CharField(max_length=20, blank=True, null=True)
+    size = models.CharField(max_length=20, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"OrderItem {self.product.name} for {self.order.user.email}"
+
+    def get_cost(self):
+        return self.price * self.quantity
+
+class Shipment(models.Model):
+    class ShipmentStatus(models.TextChoices):
+        CREATED = 'created'
+        READY_TO_SHIP = 'ready_to_ship'
+        ON_MY_WAY = 'on my way'
+        DELIVERED_TO_FIRST_WAREHOUSE = 'delivered to First warehouse'
+        IN_TRANSMIT = 'In Transmit'
+        DELIVERED_TO_SECOND_WAREHOUSE = 'delivered to Second warehouse'
+        DELIVERED_SUCCESSFULLY = 'delivered successfully'
+        FAILED_DELIVERY = 'failed delivery'
+        CANCELLED = 'cancelled'
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="shipments")
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name="shipments", null=True)
+    delivery_person = models.ForeignKey(Delivery, on_delete=models.SET_NULL, null=True, related_name='assigned_shipments')
+    from_state = models.CharField(max_length=250, blank=True)
+    to_state = models.CharField(max_length=250, blank=True)
+    from_address = models.ForeignKey(Address, on_delete=models.SET_NULL, related_name="shipment_supplier_address", null=True, blank=True)
+    to_address = models.ForeignKey(Address, on_delete=models.SET_NULL, related_name="shipment_customer_address", null=True, blank=True)
+    confirmation_code = models.CharField(max_length=6, null=True, blank=True)
+    delivery_confirmed_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=50, choices=ShipmentStatus.choices, default=ShipmentStatus.CREATED)
+    order_total_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+
+    def save(self, *args, **kwargs):
+        if not self.confirmation_code:
+            self.confirmation_code = ''.join(random.choices(string.digits, k=4))
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Shipment for Order {self.order.id} from {self.supplier}"
+
+class ShipmentItem(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    shipment = models.ForeignKey(Shipment, on_delete=models.CASCADE, related_name="items")
+    order_item = models.ForeignKey(OrderItem, on_delete=models.CASCADE, related_name="shipment_items")
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"Shipment Item {self.order_item.product.name} in Shipment {self.shipment.id}"
+
+class Coupon(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    supplier = models.ForeignKey(Supplier, related_name='coupons', on_delete=models.CASCADE)
+    code = models.CharField(max_length=50, unique=True)
+    discount = models.DecimalField(max_digits=5, decimal_places=2)
+    valid_from = models.DateTimeField()
+    valid_to = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    terms = models.TextField()
+    products = models.ManyToManyField(Product, related_name='coupons', blank=True)
+
+    def __str__(self):
+        return self.code
+
+class Warehouse(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    address = models.ForeignKey(Address, on_delete=models.CASCADE)
+    contact_person = models.CharField(max_length=100, blank=True)
+    contact_phone = models.CharField(max_length=20, blank=True)
+    delivery_fee = models.DecimalField(max_digits=5, decimal_places=2)
+
+    def __str__(self):
+        return self.name

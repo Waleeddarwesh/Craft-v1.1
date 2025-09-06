@@ -1,0 +1,24 @@
+from django.contrib import admin
+from .models import Course, CourseVideo, Enrollment
+
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ('CourseTitle', 'CategoryID', 'Rating', 'completed', 'FromDate', 'ToDate', 'Price', 'Supplier')
+    search_fields = ('CourseTitle', 'CategoryID__title', 'Supplier__user__first_name', 'Supplier__user__last_name')
+    list_filter = ('CategoryID', 'Rating', 'completed', 'FromDate', 'ToDate')
+    ordering = ('-Rating',)
+
+class CourseVideosAdmin(admin.ModelAdmin):
+    list_display = ('LectureTitle', 'CourseID', 'VideoNo')
+    search_fields = ('LectureTitle', 'CourseID__CourseTitle')
+    list_filter = ('CourseID',)
+    ordering = ('CourseID', 'VideoNo')
+
+class EnrollmentAdmin(admin.ModelAdmin):
+    list_display = ('Course', 'EnrolledUser', 'EnrollmentDate')
+    search_fields = ('Course__CourseTitle', 'EnrolledUser__first_name', 'EnrolledUser__last_name')
+    list_filter = ('Course', 'EnrollmentDate')
+    ordering = ('-EnrollmentDate',)
+
+admin.site.register(Course, CourseAdmin)
+admin.site.register(CourseVideo, CourseVideosAdmin)
+admin.site.register(Enrollment, EnrollmentAdmin)
