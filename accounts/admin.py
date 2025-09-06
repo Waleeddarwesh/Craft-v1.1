@@ -8,8 +8,21 @@ class UserAdmin(admin.ModelAdmin):
     ordering = ('email',)
 
 class CustomerAdmin(admin.ModelAdmin):
+    list_display = ('user', 'get_full_name', 'user_email', 'photo')
     search_fields = ('user__email', 'user__first_name', 'user__last_name')
     raw_id_fields = ['user']
+
+    def get_full_name(self, obj):
+        return obj.user.get_full_name
+
+    get_full_name.short_description = "Full Name"
+    get_full_name.admin_order_field = 'user__first_name'
+
+    def user_email(self, obj):
+        return obj.user.email
+
+    user_email.short_description = "Email"
+    user_email.admin_order_field = 'user__email'
 
 class SupplierAdmin(admin.ModelAdmin):
     list_display = ('user', 'category_title', 'rating', 'orders_count', 'followers_count')
