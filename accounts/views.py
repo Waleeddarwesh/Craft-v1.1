@@ -16,11 +16,17 @@ from . import permissions
 from .models import User, Supplier, Customer, Delivery, Follow, Address, OneTimePassword
 from .serializers import (
     CustomerRegistrationSerializer, SupplierRegistrationSerializer, DeliveryRegistrationSerializer,
-    LoginSerializer, SetNewPasswordSerializer, LogoutUserSerializer,AddressSerializer,
+    LoginSerializer, SetNewPasswordSerializer, LogoutUserSerializer, AddressSerializer,
     CustomerProfileSerializer, DeliveryProfileSerializer, SupplierProfileSerializer,
-    SupplierProfileSummarySerializer, SupplierDocumentSerializer, DeliveryDocumentSerializer, EmailVerificationSerializer
+    SupplierProfileSummarySerializer, SupplierDocumentSerializer, DeliveryDocumentSerializer,
+    EmailVerificationSerializer
 )
 from .utils import generate_otp_and_send_email, get_tokens_for_user, get_follower_content_type
+from rest_framework import serializers
+
+class CheckOTPValiditySerializer(serializers.Serializer):
+    otp = serializers.CharField(max_length=6)
+    email = serializers.EmailField()
 
 class ResendOtpView(GenericAPIView):
     serializer_class = EmailVerificationSerializer
@@ -53,18 +59,26 @@ class RegisterUserView(GenericAPIView):
         return Response({'message': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 class RegisterViewforCustomer(RegisterUserView):
+    serializer_class = CustomerRegistrationSerializer
+
     def post(self, request):
-        return super().post(request, CustomerRegistrationSerializer, 'customer')
+        return super().post(request, self.serializer_class, 'customer')
 
 class RegisterViewforSupplier(RegisterUserView):
+    serializer_class = SupplierRegistrationSerializer
+
     def post(self, request):
-        return super().post(request, SupplierRegistrationSerializer, 'supplier')
+        return super().post(request, self.serializer_class, 'supplier')
 
 class RegisterViewforDelivery(RegisterUserView):
+    serializer_class = DeliveryRegistrationSerializer
+
     def post(self, request):
-        return super().post(request, DeliveryRegistrationSerializer, 'delivery')
+        return super().post(request, self.serializer_class, 'delivery')
 
 class VerifyUserEmail(GenericAPIView):
+    serializer_class = EmailVerificationSerializer
+
     def post(self, request):
         otp = request.data.get('otp')
         email = request.data.get('email')
@@ -179,6 +193,8 @@ class SuppliersList(ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        if not user.is_authenticated:
+            return Supplier.objects.none()
         return Supplier.objects.filter(user__is_verified=True, user__is_active=True).exclude(user=user).order_by('id')
 
     def list(self, request, *args, **kwargs):
@@ -221,7 +237,7 @@ class SupplierDetail(RetrieveAPIView):
     serializer_class = SupplierProfileSummarySerializer
     permission_classes = [IsAuthenticated]
 
-    def get_object(self):
+    def get_object(self, **kwargs):
         pk = self.kwargs.get('pk')
         obj = get_object_or_404(Supplier, pk=pk)
         self.check_object_permissions(self.request, obj)
@@ -231,6 +247,9 @@ class SupplierDetail(RetrieveAPIView):
         supplier = self.get_object()
         serializer = self.get_serializer(supplier)
         data = serializer.data
+        if not request.user.is_authenticated:
+            data['followed_by_user'] = False
+            return Response(data)
 
         follower_content_type, follower_object_id = get_follower_content_type(request.user)
         is_followed = False
@@ -314,12 +333,13 @@ class PasswordResetRequestView(GenericAPIView):
         return Response({'message': 'OTP sent to your email for password reset.'}, status=status.HTTP_200_OK)
 
 class CheckOTPValidity(GenericAPIView):
-    def post(self, request):
-        otp = request.data.get('otp')
-        email = request.data.get('email')
+    serializer_class = CheckOTPValiditySerializer
 
-        if not otp or not email:
-            return Response({'message': 'Both email and OTP are required.'}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        otp = serializer.validated_data['otp']
+        email = serializer.validated_data['email']
 
         if OneTimePassword.objects.filter(otp=otp, user__email=email).exists():
             return Response({'message': 'OTP is valid.'}, status=status.HTTP_200_OK)
@@ -361,6 +381,8 @@ class AddressViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return self.queryset.none()
         return self.queryset.filter(user=self.request.user)
 
     def perform_create(self, serializer):

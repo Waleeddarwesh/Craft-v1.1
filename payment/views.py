@@ -12,9 +12,13 @@ from accounts.models import User
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import ValidationError
 from environ import Env
+from rest_framework.decorators import action, api_view
+
+# Instantiate the Env class first
+env = Env()
 
 # Stripe API key
-stripe.api_key = Env.str('STRIPE_SECRET_KEY')
+stripe.api_key = env.str('STRIPE_SECRET_KEY')
 
 class PaymentViewSet(viewsets.ViewSet):
     def _create_checkout_session(self, request, line_items, client_reference_id):

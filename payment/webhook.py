@@ -6,9 +6,12 @@ from orders.models import Order
 from course.models import Course, Enrollment
 from .models import PaymentHistory
 from django.db import transaction
+from environ import Env
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
-endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+env = Env()
+# Stripe API key
+stripe.api_key = env.str('STRIPE_SECRET_KEY')
+endpoint_secret = env.str('STRIPE_WEBHOOK_SECRET')
 
 @csrf_exempt
 def stripe_webhook(request):

@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'daphne', # Daphne needs to be before staticfiles
     'django.contrib.staticfiles',
 
     # Third-party apps
@@ -29,7 +30,6 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
-    'daphne',
     'drf_yasg',
     'admin_interface',
     'colorfield',
@@ -67,6 +67,23 @@ AUTH_USER_MODEL = 'accounts.User'
 DATABASES = {
     'default': env.db_url('DATABASE_URL', default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')),
 }
+
+# TEMPLATES
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
 
 # Caching & Channels
 REDIS_URL = env.str('REDIS_URL')

@@ -75,6 +75,8 @@ class SupplierProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsSupplier]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return self.queryset.none()
         return self.queryset.filter(supplier__user=self.request.user)
 
 class ProductsByFollowedSuppliersView(generics.ListAPIView):
@@ -84,6 +86,9 @@ class ProductsByFollowedSuppliersView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        if getattr(self, 'swagger_fake_view', False) or not user.is_authenticated:
+            return Product.objects.none()
+            
         follower_profile = user.customer_profile if hasattr(user, 'customer_profile') else user.supplier_profile
         follower_content_type = ContentType.objects.get_for_model(type(follower_profile))
         
@@ -130,6 +135,8 @@ class CollectionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsSupplier]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return self.queryset.none()
         return self.queryset.filter(supplier__user=self.request.user)
 
     def get_serializer_class(self):
@@ -153,6 +160,9 @@ class LatestFollowedSuppliersCollectionsView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
+        if getattr(self, 'swagger_fake_view', False) or not user.is_authenticated:
+            return Collection.objects.none()
+            
         follower_profile = user.customer_profile if hasattr(user, 'customer_profile') else user.supplier_profile
         follower_content_type = ContentType.objects.get_for_model(type(follower_profile))
         

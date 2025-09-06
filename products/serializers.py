@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import *
 from rest_framework.exceptions import ValidationError
 from collections import defaultdict
+from accounts.models import Supplier
+from django.db import transaction
 
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,7 +23,8 @@ class SimpleProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'images', 'name', 'unit_price', 'supplier_name', 'supplier_photo']
-        
+        ref_name = "ProductsSimpleProductSerializer"
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if data['images']:
@@ -190,6 +193,7 @@ class SupplierProfileSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Supplier
         fields = ['id', 'full_name', 'photo', 'category_title']
+        ref_name = "ProductsSupplierProfileSummarySerializer"
 
 class LatestCollectionSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()

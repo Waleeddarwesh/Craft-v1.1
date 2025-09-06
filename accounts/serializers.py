@@ -4,6 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.contrib.auth import authenticate
 from django.conf import settings
 import re
+from django.db import transaction
 
 from .models import User, Customer, Supplier, Delivery, Address, OneTimePassword
 from products.models import Product
@@ -213,6 +214,7 @@ class SupplierProfileSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Supplier
         fields = ['id', 'full_name', 'photo', 'category_title']
+        ref_name = "AccountsSupplierProfileSummarySerializer"
 
 class EmailVerificationSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255)

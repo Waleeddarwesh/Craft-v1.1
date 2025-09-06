@@ -1,4 +1,3 @@
-# notifications/views.py
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
@@ -13,6 +12,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return self.queryset.none()
         return self.queryset.filter(user=self.request.user)
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])

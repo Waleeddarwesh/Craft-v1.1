@@ -2,22 +2,22 @@ from django.contrib import admin
 from .models import Course, CourseVideo, Enrollment
 
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('CourseTitle', 'CategoryID', 'Rating', 'completed', 'FromDate', 'ToDate', 'Price', 'Supplier')
-    search_fields = ('CourseTitle', 'CategoryID__title', 'Supplier__user__first_name', 'Supplier__user__last_name')
-    list_filter = ('CategoryID', 'Rating', 'completed', 'FromDate', 'ToDate')
-    ordering = ('-Rating',)
+    list_display = ('title', 'category', 'rating', 'is_completed', 'from_date', 'to_date', 'price', 'supplier')
+    search_fields = ('title', 'category__title', 'supplier__user__first_name', 'supplier__user__last_name')
+    list_filter = ('category', 'rating', 'is_completed', 'from_date', 'to_date')
+    ordering = ('-rating',)
 
 class CourseVideosAdmin(admin.ModelAdmin):
-    list_display = ('LectureTitle', 'CourseID', 'VideoNo')
-    search_fields = ('LectureTitle', 'CourseID__CourseTitle')
-    list_filter = ('CourseID',)
-    ordering = ('CourseID', 'VideoNo')
+    list_display = ('lecture_title', 'course', 'video_number')
+    search_fields = ('lecture_title', 'course__title')
+    list_filter = ('course',)
+    ordering = ('course', 'video_number')
 
 class EnrollmentAdmin(admin.ModelAdmin):
-    list_display = ('Course', 'EnrolledUser', 'EnrollmentDate')
-    search_fields = ('Course__CourseTitle', 'EnrolledUser__first_name', 'EnrolledUser__last_name')
-    list_filter = ('Course', 'EnrollmentDate')
-    ordering = ('-EnrollmentDate',)
+    list_display = ('course', 'enrolled_user', 'enrollment_date')
+    search_fields = ('course__title', 'enrolled_user__first_name', 'enrolled_user__last_name')
+    list_filter = ('course', 'enrollment_date')
+    ordering = ('-enrollment_date',)
 
 admin.site.register(Course, CourseAdmin)
 admin.site.register(CourseVideo, CourseVideosAdmin)

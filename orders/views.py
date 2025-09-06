@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db import transaction
 from django.db.models import F, Q
 from django.utils import timezone
-from .models import CartItem, Cart, Order, OrderItem, Warehouse, Shipment, ShipmentItem, Coupon
+from .models import CartItem, Cart, Order, OrderItem, Warehouse, Shipment, ShipmentItem, Coupon, Wishlist, WishlistItem
 from .serializers import (
     WishlistSerializer, AddWishlistItemSerializer, WishlistItemSerializer,
     CartSerializer, AddCartItemSerializer, UpdateCartItemSerializer, CartItemSerializer,
@@ -31,6 +31,8 @@ class WishlistViewSet(viewsets.ModelViewSet):
     serializer_class = WishlistSerializer
     
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return Wishlist.objects.none()
         return Wishlist.objects.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
@@ -48,6 +50,8 @@ class WishlistItemViewSet(viewsets.ModelViewSet):
     serializer_class = WishlistItemSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return WishlistItem.objects.none()
         return WishlistItem.objects.filter(wishlist__user=self.request.user).select_related('product')
 
     def get_serializer_class(self):
@@ -65,6 +69,8 @@ class CartViewSet(viewsets.ModelViewSet):
     serializer_class = CartSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return Cart.objects.none()
         return Cart.objects.filter(user=self.request.user).prefetch_related('items__product')
 
     def create(self, request, *args, **kwargs):
@@ -82,6 +88,8 @@ class CartItemViewSet(viewsets.ModelViewSet):
     serializer_class = CartItemSerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return CartItem.objects.none()
         return CartItem.objects.filter(cart__user=self.request.user).select_related('product')
 
     def get_serializer_class(self):
@@ -108,6 +116,9 @@ class OrderViewSet(mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.Li
 
     def get_queryset(self):
         user = self.request.user
+        if getattr(self, 'swagger_fake_view', False) or not user.is_authenticated:
+            return Order.objects.none()
+        
         if hasattr(user, 'delivery_profile'):
             return Order.objects.for_delivery_person(user)
         return Order.objects.for_customer(user)
@@ -416,7 +427,7 @@ class ShipmentViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets
 
     def get_queryset(self):
         user = self.request.user
-        if not hasattr(user, 'delivery_profile'):
+        if getattr(self, 'swagger_fake_view', False) or not user.is_authenticated or not hasattr(user, 'delivery_profile'):
             return Shipment.objects.none()
 
         return Shipment.objects.filter(
@@ -513,9 +524,9 @@ class OrdersHistoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, vie
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_authenticated:
-            return Order.objects.filter(user=user).order_by('-created_at').select_related('address').prefetch_related('items__product')
-        return Order.objects.none()
+        if getattr(self, 'swagger_fake_view', False) or not user.is_authenticated:
+            return Order.objects.none()
+        return Order.objects.filter(user=user).order_by('-created_at').select_related('address').prefetch_related('items__product')
 
 class ReturnOrdersProductsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     serializer_class = ReturnRequestListRetrieveSerializer  
@@ -523,6 +534,8 @@ class ReturnOrdersProductsViewSet(mixins.ListModelMixin, mixins.RetrieveModelMix
 
     def get_queryset(self):
         user = self.request.user
+        if getattr(self, 'swagger_fake_view', False) or not user.is_authenticated:
+            return Order.objects.none()
         fourteen_days_ago = timezone.now() - timezone.timedelta(days=14)
         if hasattr(user, 'customer_profile'):
             return Order.objects.filter(user=user, updated_at__gte=fourteen_days_ago).prefetch_related('items__product')
@@ -533,6 +546,8 @@ class CouponViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsSupplier]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated or not hasattr(self.request.user, 'supplier_profile'):
+            return Coupon.objects.none()
         return Coupon.objects.filter(supplier=self.request.user.supplier_profile)
 
     def perform_create(self, serializer):
@@ -557,3 +572,7 @@ class WarehouseListView(generics.ListAPIView):
     queryset = Warehouse.objects.all()
     serializer_class = WarehouseSerializer
     permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return Warehouse.objects.none()
+        return self.queryset
