@@ -122,7 +122,7 @@ To set up the project locally, follow these steps.
 
 The project uses `drf-yasg` to provide interactive API documentation. You can access the Swagger UI to explore all available endpoints:
 
-- **Swagger UI**: [http://127.0.0.1:8000/swagger/](http://127.0.0.1:8000/docs/)
+- **Swagger UI**: [(https://craft.up.railway.app/docs/)]
 
 ---
 
