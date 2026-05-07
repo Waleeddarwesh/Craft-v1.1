@@ -1,154 +1,174 @@
-# Craft-EG
+# 🧶 Craft Application
 
-Craft-EG is a comprehensive e-commerce platform built with Django and Django REST Framework, designed to serve as a dynamic marketplace for handcrafted products. The platform facilitates direct interaction between customers, artisans (crafters), and a dedicated delivery network, providing a seamless and secure experience for all user roles.
+![Python](https://img.shields.io/badge/Python-3.11-blue) ![Django](https://img.shields.io/badge/Django-5.0-green) ![DRF](https://img.shields.io/badge/DRF-Rest_Framework-red) ![Docker](https://img.shields.io/badge/Docker-Containerized-blue) ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-This project is a full-stack solution featuring over 150 well-documented API endpoints, ensuring robust data management and efficient communication across all services.
+**Craft** is a comprehensive multi-vendor marketplace and e-learning platform designed to bridge the gap between handcraft suppliers (Crafters) and Customers. 
 
-## Table of Contents
-- [Features](#features)
-- [Interfaces](#interfaces)
-- [Technology Stack](#technology-stack)
-- [Installation and Setup](#installation-and-setup)
+This extensive backend project exposes over **150 endpoints**, integrating E-commerce logic, Social networking, Video streaming for courses, and Real-time communication into a single, scalable architecture.
+
+## 📋 Table of Contents
+- [Key Features](#key-features)
+- [Technical Architecture](#technical-architecture)
+- [User Interfaces](#user-interfaces)
+- [Prerequisites](#prerequisites)
+- [Installation (Docker - Recommended)](#installation-docker---recommended)
+- [Installation (Manual)](#installation-manual)
+- [Environment Configuration](#environment-configuration)
 - [API Documentation](#api-documentation)
-- [Contributing](#contributing)
 - [Contact](#contact)
 
----
+## 🚀 Key Features
 
-## Features
+### 🛒 E-commerce Core
+- **Marketplace:** Multi-vendor support allowing Crafters to manage products and stock.
+- **Order Management:** Complex order lifecycle (Cart -> Order -> Shipment -> Delivery).
+- **Financials:** Integrated **Stripe** payments, custom wallet system, and refund handling.
+- **Promotions:** Coupon and discount management system.
 
-- **Multi-Role User Management**: A flexible and secure user model supporting distinct roles for customers, crafters, and delivery personnel.
-- **Secure Authentication**: Implements JSON Web Token (JWT) authentication using `Simple JWT`, complete with email verification and a robust password reset flow.
-- **Dynamic E-commerce System**: A comprehensive suite of e-commerce functionalities, including product browsing, shopping carts, wishlists, and a streamlined order processing pipeline.
-- **Course Management**: A dedicated module for crafters to create and publish courses, allowing customers to enroll and track their progress toward certification.
-- **Real-time Chat and Notifications**: Utilizes Django Channels with Redis to provide real-time messaging between users and instant notifications for critical events, such as new orders or status updates.
-- **Product and Collection Management**: Crafters can easily manage their product listings, organize items into themed collections, and track stock levels.
-- **Order and Shipment Tracking**: A detailed order management system that handles complex shipment logistics, including multiple delivery stages and confirmation codes.
+### 🎓 E-Learning Platform
+- **Courses:** Crafters can upload video courses to teach their craft.
+- **Progress Tracking:** Users can enroll in courses and track their learning progress.
+- **Certificates:** System to issue certifications upon course completion.
 
----
+### 💬 Social & Real-Time
+- **Chat App:** Real-time messaging between buyers and sellers using **WebSockets (Django Channels)** and **Redis**.
+- **Social Feed:** Users can follow Crafters, like products, and view activity feeds.
+- **Notifications:** Real-time push notifications for order updates and chat messages.
 
-## Interfaces
+### 🤖 Smart Features
+- **Recommendations:** AI/Logic-based engine to suggest products and courses.
+- **Background Tasks:** Uses **Celery** for handling heavy tasks like email sending and report generation asynchronously.
 
-The application is built with three distinct user interfaces, each optimized for its specific role:
+## 🛠 Technical Architecture
 
-- **Customer Interface**: A user-friendly front-end that allows customers to discover products, enroll in courses, manage their profiles, and communicate with crafters and delivery personnel.
-- **Crafter Interface**: A powerful dashboard for artisans to manage their digital store. It provides tools for publishing and updating courses, managing product inventory, processing orders, and monitoring sales analytics.
-- **Delivery Interface**: A streamlined, mobile-friendly interface for delivery personnel to receive shipment assignments, track delivery routes, and update order statuses in real time.
+* **Backend Framework:** Django & Django REST Framework (DRF)
+* **Database:** PostgreSQL
+* **Caching & Message Broker:** Redis
+* **Async Task Queue:** Celery
+* **Real-Time Communication:** Django Channels (ASGI)
+* **Containerization:** Docker & Docker Compose
+* **Authentication:** JWT (SimpleJWT) & Social Auth (Google/Facebook)
+* **API Documentation:** Swagger (drf-yasg)
 
----
+## 👥 User Interfaces
+The backend serves three distinct frontend applications:
+1.  **Customer App:** For browsing products, buying courses, and social interaction.
+2.  **Crafter Dashboard:** For inventory management, course uploading, and sales analytics.
+3.  **Delivery App:** A streamlined interface for drivers to update shipment statuses.
 
-## Technology Stack
+## ⚙️ Prerequisites
+* Python 3.10+
+* PostgreSQL
+* Redis Server
+* Git
 
-- **Backend**: Python 3.11, Django 5.0.3, Django REST Framework
-- **Database**: PostgreSQL (recommended for production), SQLite (for local development)
-- **Asynchronous Processing**: Daphne, Channels Redis
-- **Security & Utilities**: `django-environ`, `drf-yasg`, `drf-simplejwt`, `corsheaders`
-- **Deployment**: Docker, Docker Compose
-
----
-
-## Installation and Setup
-
-To set up the project locally, follow these steps.
+## 🐳 Installation (Docker - Recommended)
+The easiest way to run the project is using Docker Compose.
 
 1.  **Clone the repository:**
-    ```sh
+    ```bash
     git clone [https://github.com/Waleeddarwesh/Craft.git](https://github.com/Waleeddarwesh/Craft.git)
     cd Craft
     ```
 
-2.  **Create and activate a virtual environment:**
-    ```sh
-    # On macOS and Linux
-    python3 -m venv venv
-    source venv/bin/activate
-    
-    # On Windows
+2.  **Create the environment file:**
+    Create a `.env` file in the root directory (see [Environment Configuration](#environment-configuration)).
+
+3.  **Build and Run:**
+    ```bash
+    docker-compose up --build
+    ```
+    This will spin up the Django web server, PostgreSQL database, Redis, and Celery workers automatically.
+
+## 🔧 Installation (Manual)
+
+If you prefer running it without Docker:
+
+1.  **Set Up Virtual Environment:**
+    ```bash
     python -m venv venv
-    .\venv\Scripts\activate
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
     ```
 
-3.  **Navigate to the project directory:**
-    ```sh
-    cd Handcrafts
-    ```
-
-4.  **Install dependencies:**
-    ```sh
+2.  **Install Dependencies:**
+    ```bash
     pip install -r requirements.txt
     ```
 
-5.  **Configure environment variables:**
-    Create a `.env` file in the `Handcrafts` directory and add your configuration settings. A template is provided in `env.example`.
+3.  **Configure Environment:**
+    Create a `.env` file in the root folder based on the example below.
 
-    ```ini
-    # .env
-    SECRET_KEY=your-secret-key-here
-    ENVIRONMENT=development
-    DEBUG=True
-    ALLOWED_HOSTS=127.0.0.1,localhost
-    DATABASE_URL=sqlite:///db.sqlite3
-    REDIS_URL=redis://localhost:6379/0
-    EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-    EMAIL_HOST=your-smtp-server.com
-    EMAIL_PORT=587
-    EMAIL_USE_TLS=True
-    EMAIL_HOST_USER=your-email@example.com
-    EMAIL_HOST_PASSWORD=your-email-password
-    CORS_ALLOWED_ORIGINS=http://localhost:3000,[http://127.0.0.1:3000](http://127.0.0.1:3000)
-    CSRF_TRUSTED_ORIGINS=http://localhost:3000,[http://127.0.0.1:3000](http://127.0.0.1:3000)
-    ```
-
-6.  **Run migrations:**
-    ```sh
-    python manage.py makemigrations
+4.  **Apply Migrations:**
+    ```bash
     python manage.py migrate
     ```
 
-7.  **Create a superuser:**
-    ```sh
+5.  **Create Superuser:**
+    ```bash
     python manage.py createsuperuser
     ```
 
-8.  **Start the development server:**
-    ```sh
+6.  **Run Server:**
+    ```bash
     python manage.py runserver
     ```
-    The application will be available at `http://127.0.0.1:8000/`.
+    *(Note: To use Chat and Async tasks manually, you must verify Redis is running locally).*
 
----
+## 🔐 Environment Configuration
 
-## API Documentation
+Create a `.env` file in the root directory (same level as `manage.py`). Do **not** hardcode credentials in `settings.py`.
 
-The project uses `drf-yasg` to provide interactive API documentation. You can access the Swagger UI to explore all available endpoints:
+```ini
+# Core Settings
+DEBUG=True
+SECRET_KEY=your_secret_key_here
+ALLOWED_HOSTS=localhost,127.0.0.1
 
-- **Swagger UI**: [(https://craft.up.railway.app/docs/)]
+# Database (PostgreSQL)
+DATABASE_URL=postgres://user:password@localhost:5432/craft_db
 
----
+# Redis (Required for Chat & Celery)
+REDIS_URL=redis://localhost:6379/0
 
-## Contributing
+# Stripe Payments
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 
-We welcome contributions to the Craft-EG project! To contribute, please follow these steps:
+# Google Auth
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
 
-1.  Fork the repository.
-2.  Create a new branch for your feature or bugfix:
-    ```sh
-    git checkout -b feature/your-feature-name
+# Email (Mailtrap or Sendgrid)
+EMAIL_HOST=sandbox.smtp.mailtrap.io
+EMAIL_HOST_USER=your_user
+EMAIL_HOST_PASSWORD=your_password
+```
+## 📖 API Documentation
+Once the server is running, you can access the interactive API documentation to test over 150 endpoints.
+
+* **Swagger UI:** [http://localhost:8000/docs/](http://localhost:8000/docs/)
+* **Redoc:** [http://localhost:8000/redoc/](http://localhost:8000/redoc/)
+
+## 🤝 Contributing
+1. Fork the repository.
+2. Create a new branch:
+    ```bash
+    git checkout -b feature/AmazingFeature
     ```
-3.  Make your changes and commit them with a descriptive message:
-    ```sh
-    git commit -m "feat: Add new feature for user profiles"
+3. Commit your changes:
+    ```bash
+    git commit -m 'Add some AmazingFeature'
     ```
-4.  Push your changes to your forked repository:
-    ```sh
-    git push origin feature/your-feature-name
+4. Push to the branch:
+    ```bash
+    git push origin feature/AmazingFeature
     ```
-5.  Create a pull request to the `main` branch of the original repository.
+5. Open a Pull Request.
 
----
+## 📞 Contact
+**Waleed Darwesh** - Backend Software Engineer  
+📧 [Waleeddarwesh2002@gmail.com](mailto:Waleeddarwesh2002@gmail.com)  
+🔗 [LinkedIn Profile](https://www.linkedin.com/in/waleeddarwesh1/)
 
-## Contact
 
-For any questions or inquiries, please contact:
-- Name: Waleed Darwesh
-- Email: Waleeddarwesh2002@gmail.com
