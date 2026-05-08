@@ -1,10 +1,10 @@
-# 🧶 Craft Application
+# 🧶 Craft Application - Version 1.1
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue) ![Django](https://img.shields.io/badge/Django-5.0-green) ![DRF](https://img.shields.io/badge/DRF-Rest_Framework-red) ![Docker](https://img.shields.io/badge/Docker-Containerized-blue) ![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 **Craft** is a comprehensive multi-vendor marketplace and e-learning platform designed to bridge the gap between handcraft suppliers (Crafters) and Customers. 
 
-This extensive backend project exposes over **150 endpoints**, integrating E-commerce logic, Social networking, Video streaming for courses, and Real-time communication into a single, scalable architecture.
+This extensive backend project integrates E-commerce logic, Social networking, Video streaming for courses, and Real-time communication into a single, scalable architecture.
 
 ## 📋 Table of Contents
 - [Key Features](#key-features)
@@ -67,7 +67,7 @@ The easiest way to run the project is using Docker Compose.
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/Waleeddarwesh/Craft.git](https://github.com/Waleeddarwesh/Craft.git)
+    git clone https://github.com/Waleeddarwesh/Craft.git
     cd Craft
     ```
 
@@ -145,7 +145,7 @@ EMAIL_HOST_USER=your_user
 EMAIL_HOST_PASSWORD=your_password
 ```
 ## 📖 API Documentation
-Once the server is running, you can access the interactive API documentation to test over 150 endpoints.
+Once the server is running, you can access the interactive API documentation to explore the endpoints.
 
 * **Swagger UI:** [http://localhost:8000/docs/](http://localhost:8000/docs/)
 * **Redoc:** [http://localhost:8000/redoc/](http://localhost:8000/redoc/)
@@ -170,5 +170,3 @@ Once the server is running, you can access the interactive API documentation to 
 **Waleed Darwesh** - Backend Software Engineer  
 📧 [Waleeddarwesh2002@gmail.com](mailto:Waleeddarwesh2002@gmail.com)  
 🔗 [LinkedIn Profile](https://www.linkedin.com/in/waleeddarwesh1/)
-
-
