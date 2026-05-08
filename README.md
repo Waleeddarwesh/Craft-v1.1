@@ -109,8 +109,8 @@ The easiest way to run the project is using Docker Compose.
 ## 1. Clone Repository
 
 ```bash
-git clone https://github.com/Waleeddarwesh/Craft.git
-cd Craft
+git clone https://github.com/Waleeddarwesh/Craft-v1.1.git
+cd Craft-v1.1
 ```
 
 ## 2. Create Environment File
